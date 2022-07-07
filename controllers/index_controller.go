@@ -7,6 +7,7 @@ package controllers
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -138,7 +139,7 @@ func (con *indexController) SearchKey(c *gin.Context) {
 	result, course, err = service.SearchKeyType(req, c)
 
 	if err != nil {
-		con.AjaxReturn(c, AJAXFAIL, "Key值不存在")
+		con.Error(c, "Key值不存在")
 		return
 	}
 
@@ -228,7 +229,11 @@ func (con *indexController) ShowKey(c *gin.Context) {
 	ctx := context.WithValue(context.Background(), "username", val)
 
 	types, err := global.UseClient.Client.Type(ctx, key).Result()
-
+	if types == "none" {
+		err = errors.New("key不存在")
+		con.ErrorHtml(c, err)
+		return
+	}
 	if err == nil {
 
 		htmlString, data, err := service.TransView(types, key, ctx)

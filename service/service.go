@@ -90,12 +90,15 @@ func SearchKeyType(conf model.RedisKeyReq, c *gin.Context) (keys []string, curso
 
 	val, _ := c.Get("username")
 	ctx := context.WithValue(context.Background(), "username", val)
-
+	var isExists int64
 	if conf.SearchType == 1 {
 		//查询指定值
 		keys = append(keys, conf.SearchKey)
 
-		_, err = global.UseClient.Client.Exists(ctx, conf.SearchKey).Result()
+		isExists, err = global.UseClient.Client.Exists(ctx, conf.SearchKey).Result()
+		if isExists == 0 {
+			err = errors.New("key不存在")
+		}
 		return
 	} else {
 		//模糊匹配
@@ -226,12 +229,13 @@ func TransView(keyType string, keys string, ctx context.Context) (string, gin.H,
 	case "hash":
 
 		res, _ := global.UseClient.Client.HGetAll(ctx, keys).Result()
-
+		total, _ := global.UseClient.Client.HLen(ctx, keys).Result()
 		htmlString = "show/hash.html"
 		data = gin.H{
 			"key":    keys,
 			"result": res,
 			"time":   time.Seconds(),
+			"total":  total,
 		}
 
 	default:

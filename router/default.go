@@ -23,6 +23,7 @@ func Init() *gin.Engine {
 	router.Use(middleware.StaticCache(), gzip.Gzip(gzip.DefaultCompression), sessions.Sessions("goredismanager", store))
 
 	router.GET("/login", controllers.LoginC.ShowLogin)
+	router.GET("/captcha", controllers.LoginC.Captcha)
 	router.POST("/login", controllers.LoginC.Login)
 	router.POST("/login_out", controllers.LoginC.LoginOut)
 
