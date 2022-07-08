@@ -51,15 +51,15 @@ func main() {
 
 	}()
 
-	go func() {
-		//windows 自动打开访问地址
-		if runtime.GOOS == "windows" {
-			url := "http://" + srv.Addr + "/index"
-			fmt.Println("访问地址：" + url)
-			cmd := exec.Command("cmd", "/c start "+url)
-			cmd.Start()
-		}
-	}()
+	//go func() {
+	//	//windows 自动打开访问地址
+	//	if runtime.GOOS == "windows" {
+	//		url := "http://" + srv.Addr + "/index"
+	//		fmt.Println("访问地址：" + url)
+	//		cmd := exec.Command("cmd", "/c start "+url)
+	//		cmd.Start()
+	//	}
+	//}()
 
 	quit := make(chan os.Signal)
 
