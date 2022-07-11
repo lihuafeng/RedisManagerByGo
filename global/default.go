@@ -10,14 +10,14 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"github.com/go-redis/redis/v8"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/spf13/viper"
 	"goredismanager/common"
 	"goredismanager/model"
 	"net"
 	"path"
 	"strings"
-
-	"github.com/go-redis/redis/v8"
-	"github.com/spf13/viper"
 )
 
 var RedisServiceStorage map[string]RedisService
@@ -161,7 +161,7 @@ func init() {
 			//dbClient.Db.SetMaxIdleConns(10)
 
 			if err := dbClient.Db.Ping(); err != nil {
-				//fmt.Print(err.Error())
+				fmt.Print(err.Error())
 				panic(mvv["servicename"].(string) + "连接失败:" + err.Error())
 			}
 		}
