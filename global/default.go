@@ -7,7 +7,9 @@ package global
 
 import (
 	"context"
+	"database/sql"
 	"flag"
+	"fmt"
 	"goredismanager/common"
 	"goredismanager/model"
 	"net"
@@ -39,6 +41,17 @@ type RedisService struct {
 	UseSsh       int
 	SSHConfig    model.SSHConfig
 	Client       *redis.Client
+}
+
+//数据库客户端
+var dbClient MysqlClient
+
+type MysqlClient struct {
+	Db *sql.DB
+}
+type MysqlService struct {
+	DbConfig map[string]string
+	Db       *sql.DB
 }
 
 func init() {
@@ -76,7 +89,7 @@ func init() {
 	if Limit == 0 {
 		Limit = 100
 	}
-
+	//redis
 	connections := ConfigViper.Get("connections")
 
 	if connections != nil {
@@ -131,6 +144,27 @@ func init() {
 			UseClient.Client = conn.Client
 		}
 
+	}
+
+	//mysql
+	mysql_con := ConfigViper.Get("mysql_config")
+	if mysql_con != nil {
+
+		mysql_slice_conns := mysql_con.([]interface{})
+		for _, mv := range mysql_slice_conns {
+			mvv := mv.(map[interface{}]interface{})
+			//构建连接："用户名:密码@tcp(IP:端口)/数据库?charset=utf8"
+			path := strings.Join([]string{mvv["username"].(string), ":", mvv["password"].(string), "@tcp(", mvv["host"].(string), ":", mvv["port"].(string), ")/", mvv["database"].(string), "?charset=utf8"}, "")
+			//fmt.Print(path)
+			dbClient.Db, _ = sql.Open("mysql", path)
+			//dbClient.Db.SetConnMaxLifetime(100)
+			//dbClient.Db.SetMaxIdleConns(10)
+
+			if err := dbClient.Db.Ping(); err != nil {
+				//fmt.Print(err.Error())
+				panic(mvv["servicename"].(string) + "连接失败:" + err.Error())
+			}
+		}
 	}
 
 	accounts := ConfigViper.Get("accounts")
