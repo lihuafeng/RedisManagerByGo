@@ -8,6 +8,7 @@ package controllers
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"goredismanager/global"
 	"net/http"
 	"time"
@@ -38,6 +39,11 @@ func (con *loginController) Login(c *gin.Context) {
 		con.Error(c, "验证码错误")
 		return
 	}
+	sql_query, _ := global.Db.Prepare("select * from admin_user where user_name=?")
+	user_info, err := sql_query.Query(username)
+	user_info.Scan()
+	fmt.Print(user_info)
+	fmt.Print(err)
 	if _, ok := global.Accounts[username]; ok {
 		if global.Accounts[username] == password {
 			userInfo := make(map[string]interface{})

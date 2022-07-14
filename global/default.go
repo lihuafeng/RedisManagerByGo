@@ -8,6 +8,7 @@ package global
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"flag"
 	"fmt"
 	"github.com/go-redis/redis/v8"
@@ -18,6 +19,7 @@ import (
 	"net"
 	"path"
 	"strings"
+	"sync"
 )
 
 var RedisServiceStorage map[string]RedisService
@@ -43,15 +45,20 @@ type RedisService struct {
 	Client       *redis.Client
 }
 
-//数据库客户端
-var dbClient MysqlClient
+var instance *MysqlClient
+var once sync.Once
+var Db *sql.DB
 
-type MysqlClient struct {
-	Db *sql.DB
-}
-type MysqlService struct {
-	DbConfig map[string]string
-	Db       *sql.DB
+//数据库客户端
+
+type MysqlClient struct{}
+
+//单例模式
+func GetInstance() *MysqlClient {
+	once.Do(func() {
+		instance = &MysqlClient{}
+	})
+	return instance
 }
 
 func init() {
@@ -154,13 +161,16 @@ func init() {
 		for _, mv := range mysql_slice_conns {
 			mvv := mv.(map[interface{}]interface{})
 			//构建连接："用户名:密码@tcp(IP:端口)/数据库?charset=utf8"
-			path := strings.Join([]string{mvv["username"].(string), ":", mvv["password"].(string), "@tcp(", mvv["host"].(string), ":", mvv["port"].(string), ")/", mvv["database"].(string), "?charset=utf8"}, "")
+			dsn := strings.Join([]string{mvv["username"].(string), ":", mvv["password"].(string), "@tcp(", mvv["host"].(string), ":", mvv["port"].(string), ")/", mvv["database"].(string), "?charset=utf8"}, "")
 			//fmt.Print(path)
-			dbClient.Db, _ = sql.Open("mysql", path)
-			//dbClient.Db.SetConnMaxLifetime(100)
-			//dbClient.Db.SetMaxIdleConns(10)
+			Db, err = sql.Open("mysql", dsn)
+			if err != nil {
+				panic(errors.New("mysql连接失败"))
+			}
+			Db.SetConnMaxLifetime(100)
+			Db.SetMaxIdleConns(10)
 
-			if err := dbClient.Db.Ping(); err != nil {
+			if err := Db.Ping(); err != nil {
 				fmt.Print(err.Error())
 				panic(mvv["servicename"].(string) + "连接失败:" + err.Error())
 			}

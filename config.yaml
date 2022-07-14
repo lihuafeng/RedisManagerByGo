@@ -12,6 +12,13 @@ connections:
     sshport: ""
     sshusername: ""
     sshpassword: ""
+mysql_config:
+- servicename: localhost
+  host: localhost
+  port: "3306"
+  username: "root"
+  password: "root"
+  database: "go-db"
 hostname: 127.0.0.1
 limit: 20
 port: "8088"
